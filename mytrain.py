@@ -198,15 +198,16 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True)
 
     # 定数
-    NUM_CLASSES = 21 # クラスの数+1 (いずれかに該当 + 全てに該当しない)
+    NUM_CLASSES = 21  # クラスの数+1 (いずれかに該当 + 全てに該当しない)
     base_lr = 3e-4  # 学習率
     input_shape = (300, 300, 3)
     # 訓練データが13696個
     # バッチサイズ16に分割した場合。1回のエポックあたりのバッチ回数は 13696/16で856。
-    epochs = 1 # 一般に誤差とは負の相関を持つが、大きくしすぎると過学習(overfit)する。
+    epochs = 5  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
     batch_size = 32  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
 
     pickleFilename = 'VOC2012.pkl'
+    hdf5WeightsFile = 'weights_SSD300.hdf5'
     path_prefix = './VOCdevkit/VOC2012/JPEGImages/'
     priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
@@ -224,7 +225,7 @@ if __name__ == "__main__":
                     (input_shape[0], input_shape[1]), do_crop=False)
 
     model = SSD300(input_shape, num_classes=NUM_CLASSES)
-    model.load_weights('weights_SSD300.hdf5', by_name=True)
+    model.load_weights(hdf5WeightsFile, by_name=True)
 
     freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
               'conv2_1', 'conv2_2', 'pool2',
@@ -246,65 +247,70 @@ if __name__ == "__main__":
     model.compile(optimizer=optim,
                   loss=MultiboxLoss(NUM_CLASSES, neg_pos_ratio=2.0).compute_loss)
 
+    print(gen.train_batches // batch_size) # 428
+    print(epochs)
+
     history = model.fit_generator(gen.generate(True),
                                   steps_per_epoch=gen.train_batches//batch_size,
                                   epochs=epochs,
-                                  verbose=1,
+                                  verbose=2,
                                   callbacks=callbacks,
                                   validation_data=gen.generate(False),
                                   validation_steps=gen.val_batches,
+                                  use_multiprocessing = False,
                                   workers=1)
 
-    inputs = []
-    images = []
-    img_path = path_prefix + sorted(val_keys)[0]
-    img = image.load_img(img_path, target_size=(300, 300))
-    img = image.img_to_array(img)
-    images.append(imread(img_path))
-    inputs.append(img.copy())
-    inputs = preprocess_input(np.array(inputs))
+    ### Show images
+    # inputs = []
+    # images = []
+    # img_path = path_prefix + sorted(val_keys)[0]
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
+    # inputs = preprocess_input(np.array(inputs))
 
-    preds = model.predict(inputs, batch_size=1, verbose=1)
-    results = bbox_util.detection_out(preds)
+    # preds = model.predict(inputs, batch_size=1, verbose=1)
+    # results = bbox_util.detection_out(preds)
 
-    for i, img in enumerate(images):
-        # Parse the outputs.
-        det_label = results[i][:, 0]
-        det_conf = results[i][:, 1]
-        det_xmin = results[i][:, 2]
-        det_ymin = results[i][:, 3]
-        det_xmax = results[i][:, 4]
-        det_ymax = results[i][:, 5]
+    # for i, img in enumerate(images):
+    #     # Parse the outputs.
+    #     det_label = results[i][:, 0]
+    #     det_conf = results[i][:, 1]
+    #     det_xmin = results[i][:, 2]
+    #     det_ymin = results[i][:, 3]
+    #     det_xmax = results[i][:, 4]
+    #     det_ymax = results[i][:, 5]
 
-        # Get detections with confidence higher than 0.6.
-        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
+    #     # Get detections with confidence higher than 0.6.
+    #     top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
 
-        top_conf = det_conf[top_indices]
-        top_label_indices = det_label[top_indices].tolist()
-        top_xmin = det_xmin[top_indices]
-        top_ymin = det_ymin[top_indices]
-        top_xmax = det_xmax[top_indices]
-        top_ymax = det_ymax[top_indices]
+    #     top_conf = det_conf[top_indices]
+    #     top_label_indices = det_label[top_indices].tolist()
+    #     top_xmin = det_xmin[top_indices]
+    #     top_ymin = det_ymin[top_indices]
+    #     top_xmax = det_xmax[top_indices]
+    #     top_ymax = det_ymax[top_indices]
 
-        colors = plt.cm.hsv(np.linspace(0, 1, 4)).tolist()
+    #     colors = plt.cm.hsv(np.linspace(0, 1, 4)).tolist()
 
-        plt.imshow(img / 255.)
-        currentAxis = plt.gca()
+    #     plt.imshow(img / 255.)
+    #     currentAxis = plt.gca()
 
-        for i in range(top_conf.shape[0]):
-            xmin = int(round(top_xmin[i] * img.shape[1]))
-            ymin = int(round(top_ymin[i] * img.shape[0]))
-            xmax = int(round(top_xmax[i] * img.shape[1]))
-            ymax = int(round(top_ymax[i] * img.shape[0]))
-            score = top_conf[i]
-            label = int(top_label_indices[i])
-    #         label_name = voc_classes[label - 1]
-            display_txt = '{:0.2f}, {}'.format(score, label)
-            coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
-            color = colors[label]
-            currentAxis.add_patch(plt.Rectangle(
-                *coords, fill=False, edgecolor=color, linewidth=2))
-            currentAxis.text(xmin, ymin, display_txt, bbox={
-                'facecolor': color, 'alpha': 0.5})
+    #     for i in range(top_conf.shape[0]):
+    #         xmin = int(round(top_xmin[i] * img.shape[1]))
+    #         ymin = int(round(top_ymin[i] * img.shape[0]))
+    #         xmax = int(round(top_xmax[i] * img.shape[1]))
+    #         ymax = int(round(top_ymax[i] * img.shape[0]))
+    #         score = top_conf[i]
+    #         label = int(top_label_indices[i])
+    # #         label_name = voc_classes[label - 1]
+    #         display_txt = '{:0.2f}, {}'.format(score, label)
+    #         coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
+    #         color = colors[label]
+    #         currentAxis.add_patch(plt.Rectangle(
+    #             *coords, fill=False, edgecolor=color, linewidth=2))
+    #         currentAxis.text(xmin, ymin, display_txt, bbox={
+    #             'facecolor': color, 'alpha': 0.5})
 
-        plt.show()
+    #     plt.show()
