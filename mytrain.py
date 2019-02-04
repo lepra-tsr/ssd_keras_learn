@@ -163,6 +163,7 @@ class Generator(object):
             inputs = []
             targets = []
             for key in keys:
+                # print(key)
                 img_path = self.path_prefix + key
                 img = imread(img_path).astype('float32')
                 y = self.gt[key].copy()
@@ -197,22 +198,28 @@ if __name__ == "__main__":
 
     np.set_printoptions(suppress=True)
 
+    ### default (21classes, VOC2012)
+    # NUM_CLASSES = 21  # クラスの数+1 (いずれかに該当 + 全てに該当しない)
+    # pickleFilename = 'VOC2012.pkl'
+    # path_prefix = './VOCdevkit/VOC2012/JPEGImages/'
+
+    ### custom (2class, face detactor based on VOC2012)
+    NUM_CLASSES = 2  # 顔の有無
+    pickleFilename = 'VOC2012_head.pkl'
+    path_prefix = './VOCdevkit/VOC2012_head/JPEGImages/'
+
     # 定数
-    NUM_CLASSES = 21  # クラスの数+1 (いずれかに該当 + 全てに該当しない)
     base_lr = 3e-4  # 学習率
     input_shape = (300, 300, 3)
     # 訓練データが13696個
     # バッチサイズ16に分割した場合。1回のエポックあたりのバッチ回数は 13696/16で856。
-    epochs = 5  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
+    epochs = 1  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
     batch_size = 32  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
 
-    pickleFilename = 'VOC2012.pkl'
     hdf5WeightsFile = 'weights_SSD300.hdf5'
-    path_prefix = './VOCdevkit/VOC2012/JPEGImages/'
     priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
-    # gt = pickle.load(open('gt_pascal.pkl', 'rb'))
     gt = pickle.load(open(pickleFilename, 'rb'))
     keys = sorted(gt.keys())
     num_train = int(round(0.8 * len(keys)))
@@ -247,20 +254,17 @@ if __name__ == "__main__":
     model.compile(optimizer=optim,
                   loss=MultiboxLoss(NUM_CLASSES, neg_pos_ratio=2.0).compute_loss)
 
-    print(gen.train_batches // batch_size) # 428
-    print(epochs)
-
     history = model.fit_generator(gen.generate(True),
                                   steps_per_epoch=gen.train_batches//batch_size,
                                   epochs=epochs,
-                                  verbose=2,
+                                  verbose=1,
                                   callbacks=callbacks,
                                   validation_data=gen.generate(False),
                                   validation_steps=gen.val_batches,
-                                  use_multiprocessing = False,
+                                  use_multiprocessing=False,
                                   workers=1)
 
-    ### Show images
+    # Show images
     # inputs = []
     # images = []
     # img_path = path_prefix + sorted(val_keys)[0]
