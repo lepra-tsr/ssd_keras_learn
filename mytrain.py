@@ -203,10 +203,15 @@ if __name__ == "__main__":
     # pickleFilename = 'VOC2012.pkl'
     # path_prefix = './VOCdevkit/VOC2012/JPEGImages/'
 
-    ### custom (2class, face detactor based on VOC2012)
+    ### custom_head (2class, face detactor based on VOC2012)
     NUM_CLASSES = 2  # 顔の有無
     pickleFilename = 'VOC2012_head.pkl'
     path_prefix = './VOCdevkit/VOC2012_head/JPEGImages/'
+
+    ### custom_face (2class, face detactor based on VOC2012)
+    NUM_CLASSES = 2  # 顔の有無
+    pickleFilename = 'VOC2012_face.pkl'
+    path_prefix = './VOCdevkit/voc2012custom/JPEGImages/'
 
     # 定数
     base_lr = 3e-4  # 学習率
@@ -261,7 +266,8 @@ if __name__ == "__main__":
                                   callbacks=callbacks,
                                   validation_data=gen.generate(False),
                                   validation_steps=gen.val_batches,
-                                  use_multiprocessing=False,
+                                  use_multiprocessing=True,
+                                  # use_multiprocessing=False,
                                   workers=1)
 
     # Show images

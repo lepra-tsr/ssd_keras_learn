@@ -43,8 +43,12 @@ class XML_preprocessor(object):
 
     def _to_one_hot(self, name):
         one_hot_vector = [0] * self.num_classes
-        if name == 'head':
+        if name == 'face':
             one_hot_vector[0] = 1
+
+        # if name == 'head':
+        #     one_hot_vector[0] = 1
+
         # if name == 'aeroplane':
         #     one_hot_vector[0] = 1
         # elif name == 'bicycle':
@@ -96,6 +100,10 @@ import pickle
 # data = XML_preprocessor('VOCdevkit/VOC2012/Annotations/').data
 # pickle.dump(data, open('VOC2012.pkl', 'wb'))
 
-# 顔検出のみ
-data = XML_preprocessor('VOCdevkit/VOC2012_head/Annotations/').data
-pickle.dump(data, open('VOC2012_head.pkl', 'wb'))
+# 顔(head)検出のみ
+# data = XML_preprocessor('VOCdevkit/VOC2012_head/Annotations/').data
+# pickle.dump(data, open('VOC2012_head.pkl', 'wb'))
+
+# 顔(face)検出のみ
+data = XML_preprocessor('VOCdevkit/voc2012custom/Annotations/').data
+pickle.dump(data, open('VOC2012_face.pkl', 'wb'))

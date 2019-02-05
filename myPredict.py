@@ -27,11 +27,16 @@ if __name__ == "__main__":
                    'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
                    'Dog', 'Horse', 'Motorbike', 'Person', 'Pottedplant',
                    'Sheep', 'Sofa', 'Train', 'Tvmonitor']
+
+    # voc_classes = ['head']
+    # weight_file_name = 'weights_SSD300_head.hdf5'
+    weight_file_name = 'weights_SSD300.hdf5'
+
     NUM_CLASSES = len(voc_classes) + 1
 
     input_shape = (300, 300, 3)
     model = SSD300(input_shape, num_classes=NUM_CLASSES)
-    model.load_weights('weights_SSD300.hdf5', by_name=True)
+    model.load_weights(weight_file_name, by_name=True)
     bbox_util = BBoxUtility(NUM_CLASSES)
 
     inputs = []
@@ -51,16 +56,16 @@ if __name__ == "__main__":
     img = image.img_to_array(img)
     images.append(imread(img_path))
     inputs.append(img.copy())
-    img_path = './pics/leplab_004.jpg'
-    img = image.load_img(img_path, target_size=(300, 300))
-    img = image.img_to_array(img)
-    images.append(imread(img_path))
-    inputs.append(img.copy())
-    img_path = './pics/leplab_005.jpg'
-    img = image.load_img(img_path, target_size=(300, 300))
-    img = image.img_to_array(img)
-    images.append(imread(img_path))
-    inputs.append(img.copy())
+    # img_path = './pics/leplab_004.jpg'
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
+    # img_path = './pics/leplab_005.jpg'
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
 
     # img_path = './pics/fish-bike.jpg'
     # img = image.load_img(img_path, target_size=(300, 300))
