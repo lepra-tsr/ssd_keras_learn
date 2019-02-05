@@ -198,30 +198,35 @@ if __name__ == "__main__":
 
     np.set_printoptions(suppress=True)
 
-    ### default (21classes, VOC2012)
+    # default (21classes, VOC2012)
     # NUM_CLASSES = 21  # クラスの数+1 (いずれかに該当 + 全てに該当しない)
     # pickleFilename = 'VOC2012.pkl'
     # path_prefix = './VOCdevkit/VOC2012/JPEGImages/'
 
-    ### custom_head (2class, face detactor based on VOC2012)
-    NUM_CLASSES = 2  # 顔の有無
-    pickleFilename = 'VOC2012_head.pkl'
-    path_prefix = './VOCdevkit/VOC2012_head/JPEGImages/'
+    # custom_head (20class, face detactor based on VOC2012)
+    # NUM_CLASSES = 21  # 顔の有無
+    # pickleFilename = 'VOC2012_head.pkl'
+    # path_prefix = './VOCdevkit/VOC2012_head/JPEGImages/'
 
-    ### custom_face (2class, face detactor based on VOC2012)
-    NUM_CLASSES = 2  # 顔の有無
-    pickleFilename = 'VOC2012_face.pkl'
-    path_prefix = './VOCdevkit/voc2012custom/JPEGImages/'
+    # custom_face (2class, face detactor based on VOC2012)
+    # NUM_CLASSES = 2  # 顔の有無
+    # pickleFilename = 'VOC2012_face.pkl'
+    # path_prefix = './VOCdevkit/voc2012custom/JPEGImages/'
+
+    # biblio
+    NUM_CLASSES = 21  # default + oki_miho, w_matsumoto, shimabuku
+    pickleFilename = 'biblio.pkl'
+    path_prefix = './VOCdevkit/biblio/JPEGImages/'
 
     # 定数
+    FINE_TUNE = False
     base_lr = 3e-4  # 学習率
     input_shape = (300, 300, 3)
     # 訓練データが13696個
     # バッチサイズ16に分割した場合。1回のエポックあたりのバッチ回数は 13696/16で856。
-    epochs = 1  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
-    batch_size = 32  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
+    epochs = 10  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
+    batch_size = 16  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
 
-    hdf5WeightsFile = 'weights_SSD300.hdf5'
     priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
@@ -237,16 +242,18 @@ if __name__ == "__main__":
                     (input_shape[0], input_shape[1]), do_crop=False)
 
     model = SSD300(input_shape, num_classes=NUM_CLASSES)
-    model.load_weights(hdf5WeightsFile, by_name=True)
 
-    freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-              'conv2_1', 'conv2_2', 'pool2',
-              'conv3_1', 'conv3_2', 'conv3_3', 'pool3']  # ,
-    #           'conv4_1', 'conv4_2', 'conv4_3', 'pool4']
-
-    for L in model.layers:
-        if L.name in freeze:
-            L.trainable = False
+    ### fine tuning ###
+    if FINE_TUNE:
+        hdf5WeightsFile = 'weights_SSD300.hdf5'
+        model.load_weights(hdf5WeightsFile, by_name=True)
+        freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
+                  'conv2_1', 'conv2_2', 'pool2',
+                  'conv3_1', 'conv3_2', 'conv3_3', 'pool3']  # ,
+        #           'conv4_1', 'conv4_2', 'conv4_3', 'pool4']
+        for L in model.layers:
+            if L.name in freeze:
+                L.trainable = False
 
     callbacks = [keras.callbacks.ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
                                                  verbose=1,

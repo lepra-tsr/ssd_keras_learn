@@ -23,14 +23,21 @@ if __name__ == "__main__":
     # config.gpu_options.per_process_gpu_memory_fraction = 0.45
     # set_session(tf.Session(config=config))
 
+    # voc_classes = ['Aeroplane', 'Bicycle', 'Bird', 'Boat', 'Bottle',
+    #                'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
+    #                'Dog', 'Horse', 'Motorbike', 'head', 'Pottedplant',
+    #                'Sheep', 'Sofa', 'Train', 'Tvmonitor']
+
     voc_classes = ['Aeroplane', 'Bicycle', 'Bird', 'Boat', 'Bottle',
                    'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
                    'Dog', 'Horse', 'Motorbike', 'Person', 'Pottedplant',
-                   'Sheep', 'Sofa', 'Train', 'Tvmonitor']
-
-    # voc_classes = ['head']
-    # weight_file_name = 'weights_SSD300_head.hdf5'
-    weight_file_name = 'weights_SSD300.hdf5'
+                   'Sheep', 'oki_miho', 'w_matsumoto', 'shimabuku']
+    # voc_classes = ['w_matsumoto', 'shimabuku']
+    # weight_file_name = 'weights_SSD300.hdf5'
+    # weight_file_name = 'weights.03-5.00.hdf5'
+    weight_file_name = './checkpoints/weights.10-4.46.hdf5'
+    # weight_file_name = './SSD/weights_SSD300_head_.hdf5'
+    # weight_file_name = './SSD/weights_SSD300_.hdf5'
 
     NUM_CLASSES = len(voc_classes) + 1
 
@@ -41,17 +48,37 @@ if __name__ == "__main__":
 
     inputs = []
     images = []
-    img_path = './pics/leplab_001.jpg'
+    # img_path = './pics/leplab_001.jpg'
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
+    # img_path = './pics/leplab_002.jpg'
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
+    # img_path = './pics/leplab_003.jpg'
+    # img = image.load_img(img_path, target_size=(300, 300))
+    # img = image.img_to_array(img)
+    # images.append(imread(img_path))
+    # inputs.append(img.copy())
+    img_path = './pics/shimabuku_001.jpg'
     img = image.load_img(img_path, target_size=(300, 300))
     img = image.img_to_array(img)
     images.append(imread(img_path))
     inputs.append(img.copy())
-    img_path = './pics/leplab_002.jpg'
+    img_path = './pics/shimabuku_002.jpg'
     img = image.load_img(img_path, target_size=(300, 300))
     img = image.img_to_array(img)
     images.append(imread(img_path))
     inputs.append(img.copy())
-    img_path = './pics/leplab_003.jpg'
+    img_path = './pics/w_matsumoto_001.jpg'
+    img = image.load_img(img_path, target_size=(300, 300))
+    img = image.img_to_array(img)
+    images.append(imread(img_path))
+    inputs.append(img.copy())
+    img_path = './pics/oki_miho_001.jpg'
     img = image.load_img(img_path, target_size=(300, 300))
     img = image.img_to_array(img)
     images.append(imread(img_path))

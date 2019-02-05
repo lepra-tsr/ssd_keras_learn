@@ -8,8 +8,8 @@ class XML_preprocessor(object):
 
     def __init__(self, data_path):
         self.path_prefix = data_path
-        # self.num_classes = 20
-        self.num_classes = 1
+        self.num_classes = 20
+        # self.num_classes = 2
         self.data = dict()
         self._preprocess_XML()
 
@@ -43,52 +43,62 @@ class XML_preprocessor(object):
 
     def _to_one_hot(self, name):
         one_hot_vector = [0] * self.num_classes
-        if name == 'face':
-            one_hot_vector[0] = 1
-
-        # if name == 'head':
+        # if name == 'w_matsumoto':
         #     one_hot_vector[0] = 1
-
-        # if name == 'aeroplane':
-        #     one_hot_vector[0] = 1
-        # elif name == 'bicycle':
+        # elif name == 'shimabuku':
         #     one_hot_vector[1] = 1
-        # elif name == 'bird':
-        #     one_hot_vector[2] = 1
-        # elif name == 'boat':
-        #     one_hot_vector[3] = 1
-        # elif name == 'bottle':
-        #     one_hot_vector[4] = 1
-        # elif name == 'bus':
-        #     one_hot_vector[5] = 1
-        # elif name == 'car':
-        #     one_hot_vector[6] = 1
-        # elif name == 'cat':
-        #     one_hot_vector[7] = 1
-        # elif name == 'chair':
-        #     one_hot_vector[8] = 1
-        # elif name == 'cow':
-        #     one_hot_vector[9] = 1
-        # elif name == 'diningtable':
-        #     one_hot_vector[10] = 1
-        # elif name == 'dog':
-        #     one_hot_vector[11] = 1
-        # elif name == 'horse':
-        #     one_hot_vector[12] = 1
-        # elif name == 'motorbike':
-        #     one_hot_vector[13] = 1
-        # elif name == 'person':
+
+
+        if name == 'aeroplane':
+            one_hot_vector[0] = 1
+        elif name == 'bicycle':
+            one_hot_vector[1] = 1
+        elif name == 'bird':
+            one_hot_vector[2] = 1
+        elif name == 'boat':
+            one_hot_vector[3] = 1
+        elif name == 'bottle':
+            one_hot_vector[4] = 1
+        elif name == 'bus':
+            one_hot_vector[5] = 1
+        elif name == 'car':
+            one_hot_vector[6] = 1
+        elif name == 'cat':
+            one_hot_vector[7] = 1
+        elif name == 'chair':
+            one_hot_vector[8] = 1
+        elif name == 'cow':
+            one_hot_vector[9] = 1
+        elif name == 'diningtable':
+            one_hot_vector[10] = 1
+        elif name == 'dog':
+            one_hot_vector[11] = 1
+        elif name == 'horse':
+            one_hot_vector[12] = 1
+        elif name == 'motorbike':
+            one_hot_vector[13] = 1
+        # elif name == 'head':
         #     one_hot_vector[14] = 1
-        # elif name == 'pottedplant':
-        #     one_hot_vector[15] = 1
-        # elif name == 'sheep':
-        #     one_hot_vector[16] = 1
+        elif name == 'person':
+            one_hot_vector[14] = 1
+        elif name == 'pottedplant':
+            one_hot_vector[15] = 1
+        elif name == 'sheep':
+            one_hot_vector[16] = 1
         # elif name == 'sofa':
         #     one_hot_vector[17] = 1
         # elif name == 'train':
         #     one_hot_vector[18] = 1
         # elif name == 'tvmonitor':
         #     one_hot_vector[19] = 1
+
+        elif name == 'oki_miho':
+            one_hot_vector[17] = 1
+        elif name == 'w_matsumoto':
+            one_hot_vector[18] = 1
+        elif name == 'shimabuku':
+            one_hot_vector[19] = 1
+
         else:
             print('unknown label: %s' % name)
 
@@ -105,5 +115,12 @@ import pickle
 # pickle.dump(data, open('VOC2012_head.pkl', 'wb'))
 
 # 顔(face)検出のみ
-data = XML_preprocessor('VOCdevkit/voc2012custom/Annotations/').data
-pickle.dump(data, open('VOC2012_face.pkl', 'wb'))
+# data = XML_preprocessor('VOCdevkit/voc2012custom/Annotations/').data
+# pickle.dump(data, open('VOC2012_face.pkl', 'wb'))
+
+# biblio
+# 'w_matsumoto'
+# 'shimabuku'
+# 'oki_miho'
+data = XML_preprocessor('VOCdevkit/biblio/Annotations/').data
+pickle.dump(data, open('biblio.pkl', 'wb'))
