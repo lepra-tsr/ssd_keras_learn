@@ -11,6 +11,7 @@ from random import shuffle
 from scipy.misc import imread
 from scipy.misc import imresize
 import tensorflow as tf
+import os
 
 from ssd import SSD300
 from ssd_training import MultiboxLoss
@@ -191,6 +192,25 @@ class Generator(object):
                     yield preprocess_input(tmp_inp), tmp_targets
 
 
+# def plot_history(history):
+
+#     plt.plot(history.history['acc'])
+#     plt.plot(history.history['val_acc'])
+#     plt.title('model_accuracy')
+#     plt.xlabel('epoch')
+#     plt.ylabel('accuracy')
+#     plt.legend(['acc', 'val_acc'], loc='lower right')
+#     plt.show()
+
+#     plt.plot(history.history['loss'])
+#     plt.plot(history.history['val_loss'])
+#     plt.title('model loss')
+#     plt.xlabel('epoch')
+#     plt.ylabel('loss')
+#     plt.legend(['loss', 'val_loss'], loc='lower right')
+#     plt.show()
+
+
 if __name__ == "__main__":
     # matplotlib config
     plt.rcParams['figure.figsize'] = (8, 8)
@@ -214,7 +234,7 @@ if __name__ == "__main__":
     # path_prefix = './VOCdevkit/voc2012custom/JPEGImages/'
 
     # biblio
-    NUM_CLASSES = 21  # default + oki_miho, w_matsumoto, shimabuku
+    NUM_CLASSES = 4  # default + oki_miho, w_matsumoto, shimabuku
     pickleFilename = 'biblio.pkl'
     path_prefix = './VOCdevkit/biblio/JPEGImages/'
 
@@ -224,8 +244,9 @@ if __name__ == "__main__":
     input_shape = (300, 300, 3)
     # 訓練データが13696個
     # バッチサイズ16に分割した場合。1回のエポックあたりのバッチ回数は 13696/16で856。
-    epochs = 10  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
-    batch_size = 16  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
+    epochs = 1  # 一般に誤差と負の相関を持つが、大きくしすぎると過学習(overfit)する。
+    batch_size = 4  # 訓練データN個に対し、一回に計算するデータ量。収束速度と反比例する。
+    gen_batch_size = 2  # Generator用バッチサイズ。テスト画像数を超える数を指定すると止まる
 
     priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
@@ -237,7 +258,7 @@ if __name__ == "__main__":
     val_keys = keys[num_train:]
     num_val = len(val_keys)
 
-    gen = Generator(gt, bbox_util, 4, path_prefix,
+    gen = Generator(gt, bbox_util, gen_batch_size, path_prefix,
                     train_keys, val_keys,
                     (input_shape[0], input_shape[1]), do_crop=False)
 
@@ -255,10 +276,13 @@ if __name__ == "__main__":
             if L.name in freeze:
                 L.trainable = False
 
-    callbacks = [keras.callbacks.ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
-                                                 verbose=1,
-                                                 save_weights_only=True),
-                 keras.callbacks.LearningRateScheduler(schedule)]
+    csv_logger = keras.callbacks.CSVLogger(
+        './checkpoints/training.log', separator=',', append=True)
+    weights_save = keras.callbacks.ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+                                                   verbose=1,
+                                                   save_weights_only=True)
+    learnRateSchedule = keras.callbacks.LearningRateScheduler(schedule)
+    callbacks = [csv_logger, weights_save, learnRateSchedule]
 
     optim = keras.optimizers.Adam(lr=base_lr)
     # optim = keras.optimizers.RMSprop(lr=base_lr)
@@ -273,61 +297,63 @@ if __name__ == "__main__":
                                   callbacks=callbacks,
                                   validation_data=gen.generate(False),
                                   validation_steps=gen.val_batches,
-                                  use_multiprocessing=True,
-                                  # use_multiprocessing=False,
+                                  # use_multiprocessing=True,
+                                  use_multiprocessing=False,
                                   workers=1)
 
-    # Show images
-    # inputs = []
-    # images = []
-    # img_path = path_prefix + sorted(val_keys)[0]
-    # img = image.load_img(img_path, target_size=(300, 300))
-    # img = image.img_to_array(img)
-    # images.append(imread(img_path))
-    # inputs.append(img.copy())
-    # inputs = preprocess_input(np.array(inputs))
+    # plot_history(history)
 
-    # preds = model.predict(inputs, batch_size=1, verbose=1)
-    # results = bbox_util.detection_out(preds)
+    #### Show images
+    inputs = []
+    images = []
+    img_path = path_prefix + sorted(val_keys)[0]
+    img = image.load_img(img_path, target_size=(300, 300))
+    img = image.img_to_array(img)
+    images.append(imread(img_path))
+    inputs.append(img.copy())
+    inputs = preprocess_input(np.array(inputs))
 
-    # for i, img in enumerate(images):
-    #     # Parse the outputs.
-    #     det_label = results[i][:, 0]
-    #     det_conf = results[i][:, 1]
-    #     det_xmin = results[i][:, 2]
-    #     det_ymin = results[i][:, 3]
-    #     det_xmax = results[i][:, 4]
-    #     det_ymax = results[i][:, 5]
+    preds = model.predict(inputs, batch_size=1, verbose=1)
+    results = bbox_util.detection_out(preds)
 
-    #     # Get detections with confidence higher than 0.6.
-    #     top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
+    for i, img in enumerate(images):
+        # Parse the outputs.
+        det_label = results[i][:, 0]
+        det_conf = results[i][:, 1]
+        det_xmin = results[i][:, 2]
+        det_ymin = results[i][:, 3]
+        det_xmax = results[i][:, 4]
+        det_ymax = results[i][:, 5]
 
-    #     top_conf = det_conf[top_indices]
-    #     top_label_indices = det_label[top_indices].tolist()
-    #     top_xmin = det_xmin[top_indices]
-    #     top_ymin = det_ymin[top_indices]
-    #     top_xmax = det_xmax[top_indices]
-    #     top_ymax = det_ymax[top_indices]
+        # Get detections with confidence higher than 0.6.
+        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
 
-    #     colors = plt.cm.hsv(np.linspace(0, 1, 4)).tolist()
+        top_conf = det_conf[top_indices]
+        top_label_indices = det_label[top_indices].tolist()
+        top_xmin = det_xmin[top_indices]
+        top_ymin = det_ymin[top_indices]
+        top_xmax = det_xmax[top_indices]
+        top_ymax = det_ymax[top_indices]
 
-    #     plt.imshow(img / 255.)
-    #     currentAxis = plt.gca()
+        colors = plt.cm.hsv(np.linspace(0, 1, 4)).tolist()
 
-    #     for i in range(top_conf.shape[0]):
-    #         xmin = int(round(top_xmin[i] * img.shape[1]))
-    #         ymin = int(round(top_ymin[i] * img.shape[0]))
-    #         xmax = int(round(top_xmax[i] * img.shape[1]))
-    #         ymax = int(round(top_ymax[i] * img.shape[0]))
-    #         score = top_conf[i]
-    #         label = int(top_label_indices[i])
-    # #         label_name = voc_classes[label - 1]
-    #         display_txt = '{:0.2f}, {}'.format(score, label)
-    #         coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
-    #         color = colors[label]
-    #         currentAxis.add_patch(plt.Rectangle(
-    #             *coords, fill=False, edgecolor=color, linewidth=2))
-    #         currentAxis.text(xmin, ymin, display_txt, bbox={
-    #             'facecolor': color, 'alpha': 0.5})
+        plt.imshow(img / 255.)
+        currentAxis = plt.gca()
 
-    #     plt.show()
+        for i in range(top_conf.shape[0]):
+            xmin = int(round(top_xmin[i] * img.shape[1]))
+            ymin = int(round(top_ymin[i] * img.shape[0]))
+            xmax = int(round(top_xmax[i] * img.shape[1]))
+            ymax = int(round(top_ymax[i] * img.shape[0]))
+            score = top_conf[i]
+            label = int(top_label_indices[i])
+    #         label_name = voc_classes[label - 1]
+            display_txt = '{:0.2f}, {}'.format(score, label)
+            coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
+            color = colors[label]
+            currentAxis.add_patch(plt.Rectangle(
+                *coords, fill=False, edgecolor=color, linewidth=2))
+            currentAxis.text(xmin, ymin, display_txt, bbox={
+                'facecolor': color, 'alpha': 0.5})
+
+        plt.show()
